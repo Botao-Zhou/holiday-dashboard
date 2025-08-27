@@ -53,4 +53,155 @@
         }
     </style>
 </head>
+<body>
+
+    <header>
+        <div id="welcome-message"></div>
+        <button id="logout-btn">退出登录</button>
+    </header>
+
+    <div class="charts-container">
+        <div id="pie-chart" class="chart-box"></div>
+        <div id="bar-chart" class="chart-box"></div>
+    </div>
+
+    <script>
+        // --- 权限验证 (Auth Guard) ---
+        // 这是页面脚本最先执行的部分，用于保护页面
+        (function() {
+            // 优先检查 localStorage（对应“记住我”）
+            const persistentToken = localStorage.getItem('user-token');
+            // 再检查 sessionStorage（对应临时登录）
+            const sessionToken = sessionStorage.getItem('user-token');
+
+            const token = persistentToken || sessionToken;
+
+            if (!token) {
+                // 如果两种存储里都没有 token，说明用户未登录，强制跳转回登录页
+                alert('请先登录！');
+                window.location.href = 'login.html';
+            } else {
+                // 如果已登录，解析 token 并显示欢迎信息
+                const user = JSON.parse(token);
+                document.getElementById('welcome-message').textContent = `欢迎你，${user.username}`;
+            }
+        })();
+
+        // --- 退出登录 ---
+        document.getElementById('logout-btn').addEventListener('click', function() {
+            // 退出时，需要把两种存储都清空，以防万一
+            localStorage.removeItem('user-token');
+            sessionStorage.removeItem('user-token');
+            window.location.href = 'login.html';
+        });
+
+        // --- ECharts 图表初始化 ---
+        // 确保 DOM 加载完成后再执行图表初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 1. 初始化饼图
+            const pieChart = echarts.init(document.getElementById('pie-chart'));
+            const pieOption = {
+                title: {
+                    text: '假期各项活动时间总览',
+                    left: 'center'
+                },
+                tooltip: {
+                    trigger: 'item',
+                    formatter: '{a} <br/>{b}: {c}小时 ({d}%)'
+                },
+                legend: {
+                    orient: 'vertical',
+                    left: 'left'
+                },
+                series: [
+                    {
+                        name: '活动类型',
+                        type: 'pie',
+                        radius: '50%',
+                        data: [
+                            { value: 60, name: '学习提升' },
+                            { value: 25, name: '体育锻炼' },
+                            { value: 80, name: '影音娱乐' },
+                            { value: 40, name: '社交活动' },
+                            { value: 35, name: '休息放松' }
+                        ],
+                        emphasis: {
+                            itemStyle: {
+                                shadowBlur: 10,
+                                shadowOffsetX: 0,
+                                shadowColor: 'rgba(0, 0, 0, 0.5)'
+                            }
+                        }
+                    }
+                ]
+            };
+            pieChart.setOption(pieOption);
+
+            // 2. 初始化堆叠柱状图
+            const barChart = echarts.init(document.getElementById('bar-chart'));
+            const barOption = {
+                title: {
+                    text: '每周活动时长趋势'
+                },
+                tooltip: {
+                    trigger: 'axis',
+                    axisPointer: {
+                        type: 'shadow' // 默认为直线，可选为：'line' | 'shadow'
+                    }
+                },
+                legend: {},
+                grid: {
+                    left: '3%',
+                    right: '4%',
+                    bottom: '3%',
+                    containLabel: true
+                },
+                xAxis: {
+                    type: 'category',
+                    data: ['第一周', '第二周', '第三周', '第四周']
+                },
+                yAxis: {
+                    type: 'value'
+                },
+                series: [
+                    {
+                        name: '学习提升',
+                        type: 'bar',
+                        stack: 'Total', // 'stack' 值相同的系列会堆叠在一起
+                        emphasis: { focus: 'series' },
+                        data: [15, 18, 20, 12]
+                    },
+                    {
+                        name: '体育锻炼',
+                        type: 'bar',
+                        stack: 'Total',
+                        emphasis: { focus: 'series' },
+                        data: [5, 7, 8, 4]
+                    },
+                    {
+                        name: '影音娱乐',
+                        type: 'bar',
+                        stack: 'Total',
+                        emphasis: { focus: 'series' },
+                        data: [20, 22, 15, 25]
+                    },
+                    {
+                        name: '社交活动',
+                        type: 'bar',
+                        stack: 'Total',
+                        emphasis: { focus: 'series' },
+                        data: [10, 8, 15, 12]
+                    }
+                ]
+            };
+            barChart.setOption(barOption);
+
+            // 让图表自适应窗口大小变化
+            window.addEventListener('resize', function() {
+                pieChart.resize();
+                barChart.resize();
+            });
+        });
+    </script>
+</body>
 </html>
